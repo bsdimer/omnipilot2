@@ -15,6 +15,7 @@ int power3 = 0;
 
 int threshold = 30;
 int step = 5;
+int delayMs = 250;
 
 void setup() {
   pinMode(AREAD_PIN1, INPUT);
@@ -23,7 +24,7 @@ void setup() {
   pinMode(PWM_OUT_PIN1, OUTPUT);
   pinMode(PWM_OUT_PIN2, OUTPUT);
   pinMode(PWM_OUT_PIN3, OUTPUT);
-  Serial.begin(115200);
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -33,7 +34,7 @@ void loop() {
   power3 = reCalculate(power3, a3input);
   log();
   writeAll();
-  delay(250);
+  delay(delayMs);
 }
 
 void log() {
@@ -45,7 +46,6 @@ void log() {
   Serial.print(",");
   Serial.print("power3:");
   Serial.print(power3);
-  Serial.println(0);
   Serial.println(threshold);
 }
 
