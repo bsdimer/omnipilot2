@@ -11,7 +11,7 @@ import adafruit_ltr390
 import spidev as SPI
 import sqlite3
 
-sys.path.append("..")
+sys.path.append("../..")
 from lib import LCD_1inch8
 from PIL import Image, ImageDraw, ImageFont
 

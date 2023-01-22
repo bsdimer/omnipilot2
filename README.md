@@ -1,0 +1,3 @@
+# Omnipilot integrations
+
+* IntegrationSolaxV1

@@ -1,0 +1,1 @@
+Using only Raspberry PI and Solax API to control the amount of power to the spare consumer.
