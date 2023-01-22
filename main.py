@@ -11,17 +11,21 @@ import adafruit_ltr390
 import spidev as SPI
 import sqlite3
 
-# sys.path.append("..")
-sys.path.append('/opt/lib')
+sys.path.append("..")
 from lib import LCD_1inch8
 from PIL import Image, ImageDraw, ImageFont
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 # Initial parameters
 enableLogging = False
 timetick = 5  # ticktime in seconds
 pwmstart = 0  # pwm is the value in percent of the starting energy for the dimmer
 pwmstep = 10  # step in percents for increase or decrease the value depending on the input readings
-uvweight = 2  # the weight constant which applies a weight on the UV sensor data. For example when the senser is under the glass his readings will be less than the normal values
+uvweight = 1  # the weight constant which applies a weight on the UV sensor data. For example when the senser is under the glass his readings will be less than the normal values
 
 # Initialize display
 RST = 27
@@ -71,8 +75,13 @@ pi_pwm.start(pwmstart)
 pwmcurrent = 0.0
 
 # Initialize I2C communication for the UV sensor
-i2c = busio.I2C(board.SCL, board.SDA)
-ltr = adafruit_ltr390.LTR390(i2c)
+try:
+    i2c = busio.I2C(board.SCL, board.SDA)
+    ltr = adafruit_ltr390.LTR390(i2c)
+except Exception or OSError as e:
+    logging.error(e)
+
+# Initialize solax API
 solaxurl = 'https://www.solaxcloud.com/proxyApp/proxy/api/getRealtimeInfo.do?tokenId=20221009183929844546800&sn=SVZ77J5ZL5'
 
 # Initialize input variables
@@ -106,7 +115,10 @@ def calculatePwmPercent():
     if feedinpower > 0:
         pwmcurrent = 100
     if 0 > feedinpower > -100:
-        pwmcurrent = pwmcurrent + pwmstep * (ltr.uvs * uvweight / 100)
+        try:
+            pwmcurrent = pwmcurrent + pwmstep * (ltr.uvs * uvweight / 100)
+        except NameError:
+            pwmcurrent = pwmcurrent + pwmstep
     elif feedinpower < -100:
         pwmcurrent = pwmcurrent - (feedinpower * -1)
     else:
@@ -119,14 +131,21 @@ def calculatePwmPercent():
 
 def log():
     if enableLogging:
-        logging.info("UV:%s \tAmb light:%s", ltr.uvs, ltr.light)
+        try:
+            logging.info("UV:%s \tAmb light:%s", ltr.uvs, ltr.light)
+        except NameError:
+            logging.info("UV:0 Amb light:0")
         logging.info("acp:%s feedinp: %s", acpower, feedinpower)
         logging.info("cmp: %s", acpower + feedinpower)
         logging.info("solax api fails: %s", solaxApiFails)
         logging.info("PWM %%: %s", pwmcurrent)
+        logging.info()
         logging.info("=========================")
 
-    print("UV:", ltr.uvs, "\t\tAmb light:", ltr.light)
+    try:
+        print("UV:", ltr.uvs, "\t\tAmb light:", ltr.light)
+    except NameError:
+        print("UV: 0,\t\tAmb light:0")
     print("acp:", acpower, " feedinp:", feedinpower)
     print("cmp:", acpower + feedinpower)
     print("solax api fails:", solaxApiFails)
@@ -138,8 +157,12 @@ def log():
     image = Image.new("RGB", (disp.width, disp.height), "BLACK")
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype("../Font/Font00.ttf", 12)
-    text = "UV: {0} \tAmb light: {1}\nacp: {2} \nfeedinp: {3}\nconsumption: {4}\n solax api fails: {5}\nPWM %:{6}".format(
-        ltr.uvs, ltr.light, acpower, feedinpower, (acpower + feedinpower), solaxApiFails, pwmcurrent)
+    try:
+        text = "UV: {0} \tAmb light: {1}\nacp: {2} \nfeedinp: {3}\nconsumption: {4}\n solax api fails: {5}\nPWM %:{6}".format(
+            ltr.uvs, ltr.light, acpower, feedinpower, (acpower + feedinpower), solaxApiFails, pwmcurrent)
+    except NameError:
+        text = "acp: {0} \nfeedinp: {1}\nconsumption: {2}\n solax api fails: {3}\nPWM %:{4}".format(
+            acpower, feedinpower, (acpower + feedinpower), solaxApiFails, pwmcurrent)
     draw.text((0, 0), text, fill="WHITE", font=font)
     disp.ShowImage(image)
 
