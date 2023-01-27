@@ -6,7 +6,7 @@ import sqlite3
 conn = sqlite3.connect('omnipilot.db')
 
 # Initialize serial communication
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 ser.flush()
 
 app = Flask(__name__)
